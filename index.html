@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="utf-8">
+		<title>manFridy</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1,user-scalable=no">
+		<meta name="apple-mobile-web-app-capable" content="yes">
+		<meta name="apple-mobile-web-app-status-bar-style" content="black">
+
+		<!--标准mui.css-->
+		<link rel="stylesheet" href="css/mui.min.css">
+		<link rel="stylesheet" href="css/app.css">
+	</head>
+
+	<body>
+		<nav class="mui-bar mui-bar-tab">
+			<a class="mui-tab-item mui-active" href="index.html">
+				<span class="mui-icon mui-icon-home"></span>
+				<span class="mui-tab-label">Home</span>
+			</a>
+			<a class="mui-tab-item" href="products.html">
+				<span class="mui-icon mui-icon-list"></span>
+				<span class="mui-tab-label">None</span>
+			</a>
+			<a class="mui-tab-item" href="me.html">
+				<span class="mui-icon mui-icon-person-filled"></span>
+				<span class="mui-tab-label">My</span>
+			</a>
+
+		</nav>
+		<header class="mui-bar mui-bar-nav">
+			<a class="mui-action-back mui-icon mui-icon-left-nav mui-pull-left"></a>
+			<h1 class="mui-title">helper</h1>
+		</header>
+		<div class="mui-content">
+			<div class="mui-card2">
+				<ul class="mui-table-view">
+					<li class="mui-table-view-cell mui-collapse" ng-controller="goldenSectionCtrl">
+						<a class="mui-navigate-right" href="#">黄金分割</a>
+						<div class="mui-collapse-content">
+							<form class="mui-input-group">
+								<div class="mui-input-row">
+									<label>名称</label>
+									<input type="text" ng-model="gsP.name" placeholder="">
+								</div>
+								<div class="mui-input-row">
+									<label>第一点</label>
+									<input type="number" ng-model="gsP.first" placeholder="">
+								</div>
+								<div class="mui-input-row">
+									<label>第二点</label>
+									<input type="number" ng-model="gsP.second" placeholder="">
+								</div>
+
+								<div class="mui-button-row">
+									<button class="mui-btn mui-btn-primary" type="button" ng-click="add();">添加</button>&nbsp;&nbsp;
+									<button class="mui-btn mui-btn-primary" type="button" onclick="reset();">重置</button>
+								</div>
+							</form>
+							<div style="margin-top: 20px;"></div>
+							<div class="mui-card" ng-repeat="g in goldenSections">
+								<div class="mui-card-header">{{g.name}}<small>({{g.first}}->{{g.second}})</small></div>
+								<div class="mui-card-content">
+									<div class="mui-card-content-inner">
+										<span ng-repeat="l in g.lines"><b>{{l.value}}</b>({{l.name}})&nbsp;&nbsp;</span>
+									</div>
+								</div>
+								<div class="mui-card-footer">{{g.desc}}<small ng-click="remove($index);">X</small></div>
+							</div>
+
+						</div>
+					</li>
+					<li class="mui-table-view-cell mui-collapse">
+						<a class="mui-navigate-right" href="#">文字排版</a>
+						<div class="mui-collapse-content">
+							<h1>h1. Heading</h1>
+							<h2>h2. Heading</h2>
+							<h3>h3. Heading<h4>h4. Heading</h4></h3>
+
+							<h5>h5. Heading</h5>
+							<h6>h6. Heading</h6>
+							<p>
+								p. 目前最接近原生App效果的框架。
+							</p>
+						</div>
+					</li>
+				</ul>
+			</div>
+		</div>
+
+		<script type="text/javascript" src="js/mui.min.js"></script>
+		<script type="text/javascript" src="js/angular.min.js"></script>
+		<script type="text/javascript" src="js/app.js"></script>
+		<script type="text/javascript">
+			mui.init({
+				swipeBack: true //启用右滑关闭功能
+			});
+			angular.module('app', ['ng']).controller("goldenSectionCtrl", function($scope) {
+				var STORE_KEY = "_GOLDEN_SECTION";
+				var gsPdef = {
+					name: ''
+				};
+				$scope.gsP = gsPdef;
+				$scope.goldenSections = mui.store(STORE_KEY) || [];
+				$scope.add = function() {
+					var gsP = $scope.gsP;
+					if (!gsP.name || !gsP.first || !gsP.second) {
+						mui.toast("请输入完整参数!");
+						return;
+					}
+					$scope.goldenSections.push(calc(gsP));
+					mui.store(STORE_KEY, $scope.goldenSections);
+				}
+				$scope.reset = function() {
+					$scope.gsP = gsPdef;
+				}
+				$scope.remove = function(index){
+					$scope.goldenSections.splice(index,1);
+					mui.store(STORE_KEY, $scope.goldenSections);
+				};
+				var points = [0.382, 0.5, 0.618];
+				//计算黄金分割
+				function calc(gsp) {
+					var first = gsp.first,
+						second = gsp.second;
+					var high = first > second ? first : second;
+					var low = first > second ? second : first,
+						desc = '',
+						isUp = first > second;
+					var lines = [];
+					for (var i = 0; i < points.length; i++) {
+						var val = isUp ? points[i] : 1 - points[i];
+						lines.push({
+							name: val,
+							value: round((high - low) * val + low)
+						});
+					}
+					if (isUp) {
+						desc = "上升,压力";
+					} else {
+						desc = "回调,支撑";
+					}
+					return {
+						name: gsp.name + (isUp ? '↑' : '↓'),
+						first: first,
+						second: second,
+						desc: desc,
+						lines: lines,
+						isUp: isUp
+					};
+				}
+
+				function round(number, length) {
+					length = length || 2;
+					var scale = Math.pow(10, length);
+					number *= scale;
+					number = Math.round(number);
+					number /= scale;
+					return number;
+				}
+			});
+			angular.element(document).ready(function() {
+				angular.bootstrap(document, ['app']);
+			});
+		</script>
+	</body>
+
+</html>
